@@ -223,6 +223,4 @@ class keras_model():
             if step_p==1:
                 bar = "=" *30
             result = " - loss:{:.4f} - acc:{:.4f}".format(loss,acc)
-            if val_acc is not None:
-                result = " - loss:{:.4f} - acc:{:.4f} - val_loss:{:.4f} - val_acc:{:.4f}".format(loss,acc,val_loss,val_acc)
             print("\r {}/{}[{}]-{:.2f}s{}".format(step+1,l,bar,t,result), end="")
