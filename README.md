@@ -23,5 +23,5 @@ demo screen
 + Python3
 + torch
 + torchvision
-+ 1GPU train(in the future, plan to use multi-gpu and cpu)
++ 1GPU train(in the future, multi-gpu and cpu train is available)
 
