@@ -16,7 +16,7 @@ k_model.fit(epoch=10,dataloader=trainloader,criterion=criterion,optimizer=optimi
 ```
 It has additional parameter shceduler,validation data,accuracy func.
 
-This is demo screen.
+demo screen
 ![Screenshot from 2020-03-22 03-07-03](https://user-images.githubusercontent.com/22934822/77241280-1c2c0400-6c33-11ea-89fc-be0cd9ce9ea9.png)
 
 ## Requirement
