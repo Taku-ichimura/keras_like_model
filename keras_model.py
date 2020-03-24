@@ -189,8 +189,9 @@ class keras_model():
                     self._keras_like_output(step=i,acc=acc,loss=loss,val_loss=val_loss,val_acc=val_acc,t=step_t,val=True)
                 self.epoch_result["val_loss"].append(val_loss)
                 self.epoch_result["val_acc"].append(val_acc)
-            is_update = save_weight(save_type,save_path,loss,acc,val_loss,val_acc)
+            is_update = self.save_weight(save_type,save_path,loss,acc,val_loss,val_acc)
             if is_update == True:
+                print("")
                 print("save weights")
             self.best_result["loss"] = min(self.best_result["loss"],loss)
             self.best_result["acc"] = max(self.best_result["acc"],acc)
@@ -199,7 +200,7 @@ class keras_model():
                 self.best_result["val_acc"] = max(self.best_result["val_acc"],val_acc)
             print("")
 
-    def save_weight(self,save_type,loss,acc,val_loss,val_acc):
+    def save_weight(self,save_type,save_path,loss,acc,val_loss,val_acc):
         update_flag = False
         if save_type=="no_auto_save":
             return None
