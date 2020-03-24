@@ -49,7 +49,7 @@ class keras_model():
         self.validation = None 
         self.step_num = None
         self.epoch_result = {"loss":[],"acc":[],"val_loss":[],"val_acc":[]}
-        self.best_result = {"loss":2**63-1,"acc":10,"val_loss":2**63-1,"val_acc":10}
+        self.best_result = {"loss":2**63-1,"acc":0,"val_loss":2**63-1,"val_acc":0}
         
         if model is None:
             raise ValueError("model is None!")
@@ -201,6 +201,29 @@ class keras_model():
             print("")
 
     def save_weight(self,save_type,save_path,loss,acc,val_loss,val_acc):
+        """
+        lossや精度が良い重みを更新しながら保存する
+
+        Parameters
+        ----------
+        save_type : string or list[string]
+            保存タイプの指定、どの量が最良のときに更新して保存するかを指定(複数可)
+        save_path : string
+            保存先のフォルダのパス
+        loss : float
+            あるepochのloss
+        acc : float
+            あるepochのaccuracy
+        val_loss : float
+            あるepochのvalidation-loss
+        val_acc : float
+            あるepochのvalidation-accuracy
+
+        Returns
+        -------
+        update_flag : bool
+            重みをupdateしたかどうか(Trueのときしている）
+        """
         update_flag = False
         if save_type=="no_auto_save":
             return None
@@ -212,8 +235,8 @@ class keras_model():
                 if t == "loss" and  self.best_result["loss"] > loss:
                     torch.save(self.model.state_dict(),os.path.join(save_path,"best_loss.pth"))
                     update_flag = True
-                elif t == "loss" and  self.best_result["acc"] < acc:
-                    torch.save(self.model.state_dict(),os.path.join(save_path,"best_loss.pth"))
+                elif t == "acc" and  self.best_result["acc"] < acc:
+                    torch.save(self.model.state_dict(),os.path.join(save_path,"best_acc.pth"))
                     update_flag = True
                 
                 if val_loss is not None:
