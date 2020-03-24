@@ -1,3 +1,6 @@
+import os
+import time
+
 class keras_model():
     """
     keras風のトレーニング+出力にするクラス
@@ -24,6 +27,10 @@ class keras_model():
         引数と出力はdefault_accuracyと同じである必要がある
     step_num : int
         step数
+    epoch_result : dict
+        epochごとの結果を格納する辞書
+    best_result : dict
+        一番良い結果の値を格納する辞書
     """
     def __init__(self,model=None):
         """
@@ -41,6 +48,8 @@ class keras_model():
         self.accuracy = None
         self.validation = None 
         self.step_num = None
+        self.epoch_result = {"loss":[],"acc":[],"val_loss":[],"val_acc":[]}
+        self.best_result = {"loss":2**63-1,"acc":10,"val_loss":2**63-1,"val_acc":10}
         
         if model is None:
             raise ValueError("model is None!")
@@ -88,7 +97,7 @@ class keras_model():
         return out.max(1)[1],loss.item()
     
     
-    def fit(self,epoch=None,dataloader=None,criterion=None,optimizer=None,scheduler=None,validation=None,accuracy=None):
+    def fit(self,epoch=None,dataloader=None,criterion=None,optimizer=None,scheduler=None,validation=None,accuracy=None,save_type="no_auto_save",save_path="./"):
         """
         モデルの学習を実行
         Parameters
@@ -108,6 +117,12 @@ class keras_model():
         accuracy : function or None, default None
             accuracyを返す関数、指定は任意。デフォルトはクラス分類を想定(=出力がスカラ)。
             引数と出力はdefault_accuracyと同じである必要がある
+        save_type : string or list, default "no_auto_save"
+            モデルを保存する規則を指定
+            loss,acc,val_loss,val_accを指定でき、指定した値が最高のときbest_[save_type].pthに保存
+            複数指定する場合はlistに入れる
+        save_path : string, default "./"
+            重みをセーブするときのpath
         """
         self.epoch = epoch
         self.dataloader = dataloader
@@ -133,6 +148,8 @@ class keras_model():
             step_acc=0
             step_loss=0
             n_sample=0
+            val_acc=None
+            val_loss=None
             model.train()
             for i,(batch_images,batch_labels) in enumerate(dataloader):
                 start_step_t = time.time()
@@ -149,7 +166,9 @@ class keras_model():
                 acc = step_acc/n_sample
                 loss = step_loss/(i+1)
                 self._keras_like_output(step=i,acc=acc,loss=loss,t=step_t)
-                
+            self.epoch_result["loss"].append(loss)
+            self.epoch_result["acc"].append(acc)
+            
             if validation is not None:
                 v_loss=0
                 v_acc=0
@@ -168,8 +187,67 @@ class keras_model():
                     val_acc = v_acc/n_sample
                     val_loss = v_loss/(i+1)
                     self._keras_like_output(step=i,acc=acc,loss=loss,val_loss=val_loss,val_acc=val_acc,t=step_t,val=True)
+                self.epoch_result["val_loss"].append(val_loss)
+                self.epoch_result["val_acc"].append(val_acc)
+            is_update = save_weight(save_type,save_path,loss,acc,val_loss,val_acc)
+            if is_update == True:
+                print("save weights")
+            self.best_result["loss"] = min(self.best_result["loss"],loss)
+            self.best_result["acc"] = max(self.best_result["acc"],acc)
+            if validation is not None:
+                self.best_result["val_loss"] = min(self.best_result["val_loss"],val_loss)
+                self.best_result["val_acc"] = max(self.best_result["val_acc"],val_acc)
             print("")
-    
+
+    def save_weight(self,save_type,loss,acc,val_loss,val_acc):
+        update_flag = False
+        if save_type=="no_auto_save":
+            return None
+        
+        elif type(save_type) is list:
+            for t in save_type:
+                if not t in list(self.epoch_result.keys()):
+                    raise ValueError("save_type is loss or acc or val_loss or val_acc")
+                if t == "loss" and  self.best_result["loss"] > loss
+                    torch.save(self.model.state_dict(),os.path.join(save_path,"best_loss.pth"))
+                    update_flag = True
+                elif t == "loss" and  self.best_result["acc"] < acc
+                    torch.save(self.model.state_dict(),os.path.join(save_path,"best_loss.pth"))
+                    update_flag = True
+                
+                if val_loss is not None:
+                    if t == "val_loss" and  self.best_result["val_loss"] > val_loss
+                        torch.save(self.model.state_dict(),os.path.join(save_path,"best_val_loss.pth"))
+                        update_flag = True
+                if val_acc is not None:
+                    if t == "val_acc" and  self.best_result["val_acc"] < val_acc
+                        torch.save(self.model.state_dict(),os.path.join(save_path,"best_val_acc.pth"))
+                        update_flag = True
+        
+        elif save_type in list(self.epoch_result.keys()):
+            if not save_type in list(self.epoch_result.keys()):
+                    raise ValueError("save_type is loss or acc or val_loss or val_acc")
+            if save_type == "loss" and  self.best_result["loss"] > loss
+                torch.save(self.model.state_dict(),os.path.join(save_path,"best_loss.pth"))
+                update_flag = True
+            elif save_type == "loss" and  self.best_result["acc"] < acc
+                torch.save(self.model.state_dict(),os.path.join(save_path,"best_loss.pth"))
+                update_flag = True
+            
+            if val_loss is not None:
+                if save_type == "val_loss" and  self.best_result["val_loss"] > val_loss
+                    torch.save(self.model.state_dict(),os.path.join(save_path,"best_val_loss.pth"))
+                    update_flag = True
+            if val_acc is not None:
+                if save_type == "val_acc" and  self.best_result["val_acc"] < val_acc
+                    torch.save(self.model.state_dict(),os.path.join(save_path,"best_val_acc.pth"))
+                    update_flag = True
+        else:
+            raise ValueError("save_type is string or list[string]")
+
+        return update_flag
+            
+
     def _default_accuracy(self,preds,labels):
         """
         accuracyを計算
