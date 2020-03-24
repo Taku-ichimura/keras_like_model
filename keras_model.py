@@ -150,7 +150,7 @@ class keras_model():
             n_sample=0
             val_acc=None
             val_loss=None
-            model.train()
+            self.model.train()
             for i,(batch_images,batch_labels) in enumerate(dataloader):
                 start_step_t = time.time()
                 preds,loss = self.train_step(batch_images,batch_labels)
@@ -173,7 +173,7 @@ class keras_model():
                 v_loss=0
                 v_acc=0
                 n_sample=0
-                model.eval()
+                self.model.eval()
                 with torch.no_grad():
                     for i,(batch_images,batch_labels) in enumerate(validation):
                         val_preds,val_loss = self.train_step(batch_images,batch_labels,True)
@@ -208,38 +208,38 @@ class keras_model():
             for t in save_type:
                 if not t in list(self.epoch_result.keys()):
                     raise ValueError("save_type is loss or acc or val_loss or val_acc")
-                if t == "loss" and  self.best_result["loss"] > loss
+                if t == "loss" and  self.best_result["loss"] > loss:
                     torch.save(self.model.state_dict(),os.path.join(save_path,"best_loss.pth"))
                     update_flag = True
-                elif t == "loss" and  self.best_result["acc"] < acc
+                elif t == "loss" and  self.best_result["acc"] < acc:
                     torch.save(self.model.state_dict(),os.path.join(save_path,"best_loss.pth"))
                     update_flag = True
                 
                 if val_loss is not None:
-                    if t == "val_loss" and  self.best_result["val_loss"] > val_loss
+                    if t == "val_loss" and  self.best_result["val_loss"] > val_loss:
                         torch.save(self.model.state_dict(),os.path.join(save_path,"best_val_loss.pth"))
                         update_flag = True
                 if val_acc is not None:
-                    if t == "val_acc" and  self.best_result["val_acc"] < val_acc
+                    if t == "val_acc" and  self.best_result["val_acc"] < val_acc:
                         torch.save(self.model.state_dict(),os.path.join(save_path,"best_val_acc.pth"))
                         update_flag = True
         
         elif save_type in list(self.epoch_result.keys()):
             if not save_type in list(self.epoch_result.keys()):
                     raise ValueError("save_type is loss or acc or val_loss or val_acc")
-            if save_type == "loss" and  self.best_result["loss"] > loss
+            if save_type == "loss" and  self.best_result["loss"] > loss:
                 torch.save(self.model.state_dict(),os.path.join(save_path,"best_loss.pth"))
                 update_flag = True
-            elif save_type == "loss" and  self.best_result["acc"] < acc
+            elif save_type == "loss" and  self.best_result["acc"] < acc:
                 torch.save(self.model.state_dict(),os.path.join(save_path,"best_loss.pth"))
                 update_flag = True
             
             if val_loss is not None:
-                if save_type == "val_loss" and  self.best_result["val_loss"] > val_loss
+                if save_type == "val_loss" and  self.best_result["val_loss"] > val_loss:
                     torch.save(self.model.state_dict(),os.path.join(save_path,"best_val_loss.pth"))
                     update_flag = True
             if val_acc is not None:
-                if save_type == "val_acc" and  self.best_result["val_acc"] < val_acc
+                if save_type == "val_acc" and  self.best_result["val_acc"] < val_acc:
                     torch.save(self.model.state_dict(),os.path.join(save_path,"best_val_acc.pth"))
                     update_flag = True
         else:
