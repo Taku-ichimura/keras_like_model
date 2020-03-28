@@ -1,6 +1,7 @@
 import os
 import time
-
+import json
+import torch
 class keras_model():
     """
     keras風のトレーニング+出力にするクラス
@@ -50,6 +51,7 @@ class keras_model():
         self.step_num = None
         self.epoch_result = {"loss":[],"acc":[],"val_loss":[],"val_acc":[]}
         self.best_result = {"loss":2**63-1,"acc":0,"val_loss":2**63-1,"val_acc":0}
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
         if model is None:
             raise ValueError("model is None!")
@@ -77,17 +79,18 @@ class keras_model():
         model = self.model
         criterion = self.criterion
         scheduler = self.scheduler
+        device = self.device
         
         if val:
-            images = images.cuda()
-            labels = labels.cuda()
+            images = images.to(device)
+            labels = labels.to(device)
             out = model(images)
             loss = criterion(out, labels)
             return out.max(1)[1],loss.item()
         
         optimizer.zero_grad()
-        images = images.cuda()
-        labels = labels.cuda()
+        images = images.to(device)
+        labels = labels.to(device)
         out = model(images)
         loss = criterion(out, labels)
         loss.backward()
@@ -288,7 +291,7 @@ class keras_model():
         acc : float
             精度
         """
-        acc = (preds == labels.cuda()).sum()
+        acc = (preds == labels.to(self.device)).sum()
         return acc.item()
         
     def _keras_like_output(self,step,acc,loss,t,val=False,val_loss=None,val_acc=None):
